@@ -4,7 +4,7 @@ from services.auth_service import AuthService
 from dao.employee_dao import EmployeeDAO
 employee_dao = EmployeeDAO()
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import bcrypt
 
 from dao.category_dao import CategoryDAO
@@ -18,6 +18,9 @@ store_product_dao = StoreProductDAO()
 
 from dao.customer_dao import CustomerDAO
 customer_dao = CustomerDAO()
+
+from dao.check_dao import CheckDAO
+check_dao = CheckDAO()
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
@@ -621,6 +624,156 @@ def delete_customer_route(card_number):
         flash("❌ Не вдалося видалити картку. Можливо, цей клієнт вже робив покупки й зафіксований у чеках.")
         
     return redirect(url_for('customers'))
+
+@app.route('/checks')
+def checks():
+    if not session.get('user_role'):
+        flash("Будь ласка, авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+        
+    all_checks = check_dao.get_all_checks()
+    return render_template('checks.html', checks=all_checks)
+
+from datetime import datetime, timedelta
+from dao.store_product_dao import StoreProductDAO
+from dao.customer_dao import CustomerDAO
+
+store_product_dao = StoreProductDAO()
+customer_dao = CustomerDAO()
+
+@app.route('/checks/add', methods=['GET', 'POST'])
+def add_check_route():
+    if session.get('user_role') != 'Cashier':
+        flash("❌ Доступ заборонено! Тільки касири можуть створювати чеки.")
+        return redirect(url_for('checks'))
+
+    store_products = store_product_dao.get_all_store_products()
+    customers = customer_dao.get_all_customers()
+
+    if request.method == 'POST':
+        check_number = request.form.get('check_number').strip()
+        card_number = request.form.get('card_number')
+        date_str = request.form.get('print_date')
+        
+        upcs = request.form.getlist('upc[]')
+        quantities = request.form.getlist('quantity[]')
+
+        if not check_number or not date_str or not upcs:
+            flash("❌ Заповніть номер чека, дату та додайте хоча б один товар!")
+            return render_template('add_check.html', products=store_products, customers=customers)
+        
+        #no more than 3 years ago
+        try:
+            print_date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            flash("❌ Некоректний формат дати!")
+            return render_template('add_check.html', products=store_products, customers=customers)
+
+        three_years_ago = datetime.now() - timedelta(days=3 * 365)
+        if print_date < three_years_ago:
+            flash(f"❌ Помилка валідації: Архів чеків зберігається лише 3 роки! Дата не може бути ранішою за {three_years_ago.strftime('%d.%m.%Y')}.")
+            return render_template('add_check.html', products=store_products, customers=customers)
+        if print_date > datetime.now():
+            flash("❌ Помилка валідації: Не можна пробити чек майбутнім часом!")
+            return render_template('add_check.html', products=store_products, customers=customers)
+
+        #total coast
+        sales_list = []
+        total_sum = 0.0
+
+
+        prod_dict = {p['upc']: p for p in store_products}
+
+        for i in range(len(upcs)):
+            current_upc = upcs[i]
+            if not current_upc: continue
+            
+            try:
+                qty = int(quantities[i])
+                if qty <= 0: raise ValueError()
+            except ValueError:
+                flash("❌ Кількість товару повинна бути цілим додатним числом!")
+                return render_template('add_check.html', products=store_products, customers=customers)
+
+            if current_upc not in prod_dict:
+                flash(f"❌ Товар з UPC {current_upc} не знайдено в магазині.")
+                return render_template('add_check.html', products=store_products, customers=customers)
+
+            item_data = prod_dict[current_upc]
+            
+            #check if enough quantity is available in stock
+            if item_data['quantity'] < qty:
+                flash(f"❌ Недостатньо товару '{item_data['product_name']}' на складі! В наявності лише {item_data['quantity']} шт.")
+                return render_template('add_check.html', products=store_products, customers=customers)
+
+            item_price = float(item_data['price'])
+            total_sum += item_price * qty
+
+            sales_list.append({
+                "upc": current_upc,
+                "quantity": qty,
+                "price": item_price
+            })
+
+        discount_percent = 0
+        customer_data = customer_dao.get_customer_by_card(card_number)
+        if customer_data:
+            discount_percent = int(customer_data['percent'])
+
+        #apply discount
+        if discount_percent > 0:
+            total_sum = total_sum * (1 - (discount_percent / 100.0))
+
+        vat_value = (total_sum * 20) / 120
+
+        check_data = {
+            "check_number": check_number,
+            "id_employee": session.get('user_id'),  #auto-fill with the logged-in cashier's ID
+            "card_number": card_number if card_number != "" else None,
+            "print_date": print_date,
+            "sum_total": total_sum,
+            "vat": vat_value
+        }
+
+        if check_dao.create_check_with_sales(check_data, sales_list):
+            flash(f"✅ Чек №{check_number} успішно збережено")
+            return redirect(url_for('checks'))
+        else:
+            flash("❌ Помилка бази даних. Перевірте, чи унікальний номер чека.")
+            return render_template('add_check.html', products=store_products, customers=customers)
+
+    return render_template('add_check.html', products=store_products, customers=customers)
+
+@app.route('/checks/delete/<check_number>', methods=['POST'])
+def delete_check_route(check_number):
+    if session.get('user_role') != 'Manager':
+        flash("❌ Доступ заборонено! Тільки менеджер може анулювати та видаляти чеки.")
+        return redirect(url_for('checks'))
+
+    if check_dao.delete_check(check_number):
+        flash(f"✅ Чек №{check_number} успішно анульовано. Товари повернуто на склад!")
+    else:
+        flash("❌ Не вдалося видалити чек через помилку бази даних.")
+        
+    return redirect(url_for('checks'))
+
+@app.route('/checks/view/<check_number>')
+def view_check_route(check_number):
+    """
+    Маршрут для детального перегляду фіскального чека (товарів у ньому).
+    """
+    if not session.get('user_role'):
+        flash("Будь ласка, авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+
+    check_info = check_dao.get_check_by_number(check_number)
+    if not check_info:
+        flash("❌ Чек не знайдено в архіві системи!")
+        return redirect(url_for('checks'))
+
+    check_items = check_dao.get_check_details(check_number)
+
+    return render_template('view_check.html', check=check_info, items=check_items)
 
 if __name__ == '__main__':
     app.run(debug=True)

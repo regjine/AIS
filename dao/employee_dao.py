@@ -11,7 +11,7 @@ class EmployeeDAO:
         sql_query = """
             SELECT id_employee, empl_surname, empl_name, empl_patronymic, 
                    empl_role, salary, date_of_birth, date_of_start, 
-                   phone_number, city, street, zip_code
+                   phone_number, city, street, zip_code, password
             FROM Employee 
             WHERE id_employee = ?
         """
@@ -28,7 +28,7 @@ class EmployeeDAO:
                     "patronymic": row.empl_patronymic if row.empl_patronymic else "",
                     "role": row.empl_role, "salary": row.salary,
                     "date_of_birth": row.date_of_birth, "date_of_start": row.date_of_start,
-                    "phone": row.phone_number, "city": row.city, "street": row.street, "zip": row.zip_code
+                    "phone": row.phone_number, "city": row.city, "street": row.street, "zip": row.zip_code, "password_hash": row.password
                 }
             return None
         except Exception as e:

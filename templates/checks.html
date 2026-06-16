@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Чеки - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Архів фіскальних чеків{% endblock %}
+
+{% block content %}
+<style>
+    .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 20px; }
+    .check-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .check-table th, .check-table td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+    .check-table th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+    .check-table tr:hover { background-color: #fcfcfc; }
+    .btn-create { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; }
+    .btn-create:hover { background: #218838; }
+    .action-view { text-decoration: none; color: #007bff; font-weight: bold; }
+    .action-view:hover { text-decoration: underline; }
+    .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: bold; padding: 0; font-family: inherit; font-size: inherit; }
+    .action-del:hover { text-decoration: underline; }
+</style>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div style="margin-bottom: 20px; padding: 12px; background: #d4edda; color: #155724; border-radius: 4px;">
+        {% for message in messages %}
+          <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if session.get('user_role') == 'Cashier' %}
+<div>
+    <a href="/checks/add" class="btn-create">Пробити новий чек</a>
+</div>
+{% endif %}
+
+<div class="table-container">
+    <table class="check-table">
+        <thead>
+            <tr>
+                <th>Номер чека</th>
+                <th>Касир</th>
+                <th>Картка клієнта</th>
+                <th>Дата та час</th>
+                <th>ПДВ</th>
+                <th>Загальна сума</th>
+                <th>Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for chk in checks %}
+            <tr>
+                <td style="font-family: monospace; font-weight: bold; color: #222;">{{ chk.check_number }}</td>
+                <td><span style="background: #f1f3f5; padding: 3px 6px; border-radius: 4px;">👤 {{ chk.cashier_name }}</span></td>
+                <td style="font-family: monospace;">{{ chk.card_number }}</td>
+                <td>{{ chk.print_date.strftime('%d.%m.%Y %H:%M') if chk.print_date else '—' }}</td>
+                <td style="color: #666;">{{ "%.2f"|format(chk.vat) }} грн</td>
+                <td style="font-weight: bold; color: #28a745;">{{ "%.2f"|format(chk.sum_total) }} грн</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <a href="{{ url_for('view_check_route', check_number=chk.check_number) }}" class="action-view">
+                            Переглянути
+                        </a>
+            
+                        {% if session.get('user_role') == 'Manager' %}
+                        <form action="/checks/delete/{{ chk.check_number }}" method="POST" style="display:inline; margin:0;"
+                              onsubmit="return confirm('Увага! Ви впевнені, що хочете анулювати чек №{{ chk.check_number }} та повернути товари на склад?');">
+                            <button type="submit" class="action-del">
+                                Видалити
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #666; font-style: italic;">Архів чеків порожній.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

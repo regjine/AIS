@@ -82,15 +82,12 @@
     <a href="/store_products">🛒 Товари у магазині</a>
     <a href="/products">📦 Товари</a>
     <a href="/customers">💳 Картки клієнтів</a>
+    <a href="/checks" class="nav-link">🧾 Чеки</a>
     
     {% if session['user_role'] == 'Manager' %}
         <a href="/employees">👥 Співробітники</a>
         <a href="/categories">🗂️ Категорії товарів</a>
         <a href="/reports">📊 Звіти</a>
-    {% endif %}
-    
-    {% if session['user_role'] == 'Cashier' %}
-        <a href="/make-sale">🛒 Оформити продаж (Чек)</a>
     {% endif %}
 </div>
 

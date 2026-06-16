@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Чек {{ check.check_number }} - АІС ZLAGODA{% endblock %}
+
+{% block content %}
+<style>
+    .receipt-back-btn { text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+    .receipt-container { 
+        background: #ffffff; 
+        max-width: 450px; 
+        margin: 0 auto; 
+        padding: 30px 20px; 
+        border: 1px solid #ddd; 
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        font-family: 'Courier New', Courier, monospace;
+        color: #000;
+    }
+    .receipt-header { text-align: center; margin-bottom: 20px; border-bottom: 1px dashed #000; padding-bottom: 15px; }
+    .receipt-title { font-size: 22px; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
+    
+    .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+    .receipt-divider { border-top: 1px dashed #000; margin: 15px 0; }
+    
+    .item-block { margin-bottom: 12px; font-size: 14px; }
+    .item-name { font-weight: bold; }
+    .item-details { display: flex; justify-content: space-between; padding-left: 15px; color: #333; }
+</style>
+
+<a href="/checks" class="receipt-back-btn">← Назад до архіву чеків</a>
+
+<div class="receipt-container">
+    <div class="receipt-header">
+        <div class="receipt-title">ТЦ "ЗЛАГОДА"</div>
+        <div style="font-size: 13px;">Дякуємо, що обираєте нас!</div>
+    </div>
+
+    <div class="receipt-row">
+        <span><b>ЧЕК №:</b></span>
+        <span>{{ check.check_number }}</span>
+    </div>
+    <div class="receipt-row">
+        <span><b>КАСИР:</b></span>
+        <span>{{ check.cashier_name }}</span>
+    </div>
+    <div class="receipt-row">
+        <span><b>ДАТА:</b></span>
+        <span>{{ check.print_date.strftime('%d.%m.%Y %H:%M') if check.print_date else '—' }}</span>
+    </div>
+    <div class="receipt-row">
+        <span><b>КАРТКА КЛІЄНТА:</b></span>
+        <span>{{ check.card_number }}</span>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <div style="margin-bottom: 10px; font-weight: bold;">ПРИДБАНІ ТОВАРИ:</div>
+    {% for item in items %}
+    <div class="item-block">
+        <div class="item-name">{{ item.product_name }}</div>
+        <div class="item-details">
+            <span>{{ item.quantity }} шт. х {{ "%.2f"|format(item.price) }} грн</span>
+            <span><b>{{ "%.2f"|format(item.total_item_price) }} грн</b></span>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="receipt-divider"></div>
+
+    <div class="receipt-row" style="font-size: 15px;">
+        <span>ПДВ (20%):</span>
+        <span>{{ "%.2f"|format(check.vat) }} грн</span>
+    </div>
+    
+    <div class="receipt-row" style="font-size: 20px; font-weight: bold; margin-top: 10px;">
+        <span>ЗАГАЛОМ:</span>
+        <span>{{ "%.2f"|format(check.sum_total) }} грн</span>
+    </div>
+
+    <div class="receipt-divider" style="border-top-style: solid; margin-bottom: 5px;"></div>
+    <div style="text-align: center; font-size: 12px; font-style: italic; margin-top: 15px;">
+        *** ФІСКАЛЬНИЙ ЧЕК ***
+    </div>
+</div>
+{% endblock %}
