@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Товари в магазині - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Товари на полицях та складах супермаркету{% endblock %}
+
+{% block content %}
+<style>
+    .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 20px; }
+    .store-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .store-table th, .store-table td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; }
+    .store-table th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+    .store-table tr:hover { background-color: #fcfcfc; }
+    
+    /* Стилі для бейджиків стану */
+    .badge-promo { background: #dc3545; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+    .badge-regular { background: #28a745; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+    .text-warning-custom { color: #fd7e14; font-weight: bold; }
+    
+    .btn-add { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; }
+    .btn-add:hover { background: #218838; }
+    .action-link { text-decoration: none; color: #007bff; margin-right: 10px; font-weight: 500; }
+    .action-link:hover { text-decoration: underline; }
+    .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: 500; padding: 0; font-family: inherit; font-size: inherit; }
+    .action-del:hover { text-decoration: underline; }
+</style>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div style="margin-bottom: 20px; padding: 12px; background: #d4edda; color: #155724; border-radius: 4px;">
+        {% for message in messages %}
+          <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if session.get('user_role') == 'Manager' %}
+<div>
+    <a href="/store_products/add" class="btn-add">+ Завезти товар у магазин</a>
+</div>
+{% endif %}
+
+<div class="table-container">
+    <table class="store-table">
+        <thead>
+            <tr>
+                <th>Штрих-код (UPC)</th>
+                <th>Назва товару</th>
+                <th>Ціна продажу</th>
+                <th>Кількість в наявності</th>
+                <th>Статус</th>
+                <th>Акційний UPC</th>
+                {% if session.get('user_role') == 'Manager' %}
+                <th>Дії</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in store_products %}
+            <tr {% if item.is_promo %}style="background-color: #fffaf0;"{% endif %}>
+                <td style="font-family: monospace; font-weight: bold; color: #444;">{{ item.upc }}</td>
+                <td style="font-weight: 600;">{{ item.product_name }}</td>
+                <td style="font-weight: bold; color: #111;">{{ "%.2f"|format(item.price) }} грн</td>
+                
+                <td {% if item.quantity < 5 %}class="text-warning-custom"{% endif %}>
+                    {{ item.quantity }} шт.
+                    {% if item.quantity == 0 %}(Немає в наявності){% endif %}
+                </td>
+                
+                <td>
+                    {% if item.is_promo %}
+                        <span class="badge-promo">АКЦІЯ</span>
+                    {% else %}
+                        <span class="badge-regular">Звичайний</span>
+                    {% endif %}
+                </td>
+                
+                <td style="font-family: monospace; color: #666;">
+                    {{ item.upc_prom if item.upc_prom else '—' }}
+                </td>
+                
+                {% if session.get('user_role') == 'Manager' %}
+                <td>
+                    <a href="/store_products/edit/{{ item.upc }}" class="action-link">Редагувати</a>
+                    <form action="/store_products/delete/{{ item.upc }}" method="POST" style="display:inline; margin:0;"
+                          onsubmit="return confirm('Прибрати партію з UPC {{ item.upc }} з полиць магазину?');">
+                        <button type="submit" class="action-del">Видалити</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align: center; color: #666; font-style: italic;">На полицях магазину порожньо. Нові товари ще не завезли.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

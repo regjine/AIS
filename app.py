@@ -13,6 +13,9 @@ category_dao = CategoryDAO()
 from dao.product_dao import ProductDAO
 product_dao = ProductDAO()
 
+from dao.store_product_dao import StoreProductDAO
+store_product_dao = StoreProductDAO()
+
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
 
@@ -387,6 +390,123 @@ def delete_product_route(prod_id):
         flash("❌ Не вдалося видалити товар. Можливо, на нього посилаються товари, які вже лежать на полицях магазину.")
         
     return redirect(url_for('products'))
+
+@app.route('/store_products')
+def store_products():
+    if not session.get('user_role'):
+        flash("Будь ласка, авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+        
+    all_store_items = store_product_dao.get_all_store_products()
+    return render_template('store_products.html', store_products=all_store_items)
+
+@app.route('/store_products/add', methods=['GET', 'POST'])
+def add_store_product_route():
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено! Тільки менеджер може додавати товари в магазин.")
+        return redirect(url_for('store_products'))
+
+    #list of products from Product table to choose from when adding a new Store_Product
+    catalog_products = product_dao.get_all_products()
+
+    if request.method == 'POST':
+        upc = request.form.get('upc')
+        upc_prom = request.form.get('upc_prom')
+        product_id = request.form.get('product_id')
+        price = request.form.get('price')
+        quantity = request.form.get('quantity')
+        is_promo = True if request.form.get('is_promo') == 'on' else False
+
+        if not upc or not product_id or not price or not quantity:
+            flash("❌ Будь ласка, заповніть усі обов'язкові поля!")
+            return render_template('add_store_product.html', catalog=catalog_products)
+
+        try:
+            clean_price = float(price.replace(',', '.'))
+            clean_quantity = int(quantity)
+        except ValueError:
+            flash("❌ Некоректний формат ціни або кількості!")
+            return render_template('add_store_product.html', catalog=catalog_products)
+
+        new_store_item = {
+            "upc": upc.strip(),
+            "upc_prom": upc_prom.strip() if upc_prom else None,
+            "product_id": int(product_id),
+            "price": clean_price,
+            "quantity": clean_quantity,
+            "is_promo": is_promo
+        }
+
+        if store_product_dao.add_store_product(new_store_item):
+            flash(f"✅ Товар з UPC {upc} успішно виставлено на полиці магазину!")
+            return redirect(url_for('store_products'))
+        else:
+            flash("❌ Не вдалося додати товар. Перевірте, чи унікальний UPC (можливо, такий штрих-код вже є в базі).")
+            return render_template('add_store_product.html', catalog=catalog_products)
+
+    return render_template('add_store_product.html', catalog=catalog_products)
+
+@app.route('/store_products/edit/<upc>', methods=['GET', 'POST'])
+def edit_store_product_route(upc):
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('store_products'))
+
+    sp_item = store_product_dao.get_store_product_by_upc(upc)
+    if not sp_item:
+        flash("❌ Товар з таким UPC не знайдено в магазині!")
+        return redirect(url_for('store_products'))
+
+    catalog_products = product_dao.get_all_products()
+
+    if request.method == 'POST':
+        upc_prom = request.form.get('upc_prom')
+        product_id = request.form.get('product_id')
+        price = request.form.get('price')
+        quantity = request.form.get('quantity')
+        is_promo = True if request.form.get('is_promo') == 'on' else False
+
+        if not product_id or not price or not quantity:
+            flash("❌ Усі обов'язкові поля мають бути заповнені!")
+            return render_template('edit_store_product.html', item=sp_item, catalog=catalog_products)
+
+        try:
+            clean_price = float(price.replace(',', '.'))
+            clean_quantity = int(quantity)
+        except ValueError:
+            flash("❌ Некоректний формат ціни або кількості!")
+            return render_template('edit_store_product.html', item=sp_item, catalog=catalog_products)
+
+        updated_sp = {
+            "upc_prom": upc_prom.strip() if upc_prom else None,
+            "product_id": int(product_id),
+            "price": clean_price,
+            "quantity": clean_quantity,
+            "is_promo": is_promo
+        }
+
+        if store_product_dao.update_store_product(upc, updated_sp):
+            flash(f"✅ Дані про товар з UPC {upc} успішно оновлено!")
+            return redirect(url_for('store_products'))
+        else:
+            flash("❌ Не вдалося зберегти зміни в базі даних.")
+            return render_template('edit_store_product.html', item=sp_item, catalog=catalog_products)
+
+    return render_template('edit_store_product.html', item=sp_item, catalog=catalog_products)
+
+
+@app.route('/store_products/delete/<upc>', methods=['POST'])
+def delete_store_product_route(upc):
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('store_products'))
+
+    if store_product_dao.delete_store_product(upc):
+        flash("✅ Товар успішно прибрано з полиць магазину!")
+    else:
+        flash("❌ Не вдалося видалити товар. Можливо, цей штрих-код фігурує в існуючих чеках продажів.")
+        
+    return redirect(url_for('store_products'))
 
 if __name__ == '__main__':
     app.run(debug=True)
