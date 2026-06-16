@@ -775,5 +775,20 @@ def view_check_route(check_number):
 
     return render_template('view_check.html', check=check_info, items=check_items)
 
+@app.route('/profile')
+def profile():
+    if not session.get('user_role'):
+        flash("Будь ласка, авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+
+    current_user_id = session.get('user_id')
+    employee_info = employee_dao.get_employee_by_id(current_user_id)
+    
+    if not employee_info:
+        flash("❌ Не вдалося завантажити дані профілю.")
+        return redirect(url_for('index'))
+
+    return render_template('profile.html', emp=employee_info)
+
 if __name__ == '__main__':
     app.run(debug=True)

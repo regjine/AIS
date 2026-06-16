@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Мій профіль - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Особистий кабінет працівника{% endblock %}
+
+{% block content %}
+<style>
+    .employee-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border-left: 5px solid #007bff;
+        max-width: 450px; 
+        margin-top: 10px;
+    }
+    
+    .role-manager { border-left-color: #ffc107; }
+    .role-cashier { border-left-color: #28a745; }
+    
+    .emp-name {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    .emp-role {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .emp-details {
+        font-size: 0.95em;
+        color: #444;
+        line-height: 1.6;
+    }
+</style>
+
+<div class="employee-card {% if emp.role == 'Manager' %}role-manager{% else %}role-cashier{% endif %}">
+    
+    <div class="emp-name">
+        {{ emp.surname }} {{ emp.name }} {{ emp.patronymic if emp.patronymic else '' }}
+    </div>
+    <div class="emp-role">{{ emp.role }}</div>
+    
+    <div class="emp-details">
+        <div><b>Телефон:</b> {{ emp.phone }}</div>
+        <div><b>Зарплата:</b> {{ "%.2f"|format(emp.salary|float)  }} грн</div>
+        <div><b>ID:</b> {{ emp.id }}</div>
+        
+        <div><b>Дата народження:</b> 
+            {{ emp.date_of_birth.strftime('%d.%m.%Y')  }}
+        </div>
+        
+        <div><b>Дата початку роботи:</b> 
+            {{ emp.date_of_start.strftime('%d.%m.%Y')  }}
+        </div>
+        
+        <div><b>Адреса:</b> 
+            {% if emp.city or emp.street or emp.zip_code %}
+                м. {{ emp.city }}, вул. {{ emp.street  }}
+            {% else %}
+                —
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
