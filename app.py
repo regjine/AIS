@@ -16,6 +16,9 @@ product_dao = ProductDAO()
 from dao.store_product_dao import StoreProductDAO
 store_product_dao = StoreProductDAO()
 
+from dao.customer_dao import CustomerDAO
+customer_dao = CustomerDAO()
+
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
 
@@ -507,6 +510,117 @@ def delete_store_product_route(upc):
         flash("❌ Не вдалося видалити товар. Можливо, цей штрих-код фігурує в існуючих чеках продажів.")
         
     return redirect(url_for('store_products'))
+
+@app.route('/customers')
+def customers():
+    if not session.get('user_role'):
+        flash("Будь ласка, авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+        
+    all_custs = customer_dao.get_all_customers()
+    return render_template('customers.html', customers=all_custs)
+
+@app.route('/customers/add', methods=['GET', 'POST'])
+def add_customer_route():
+    if not session.get('user_role'):
+        flash("Авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        card_number = request.form.get('card_number')
+        surname = request.form.get('surname')
+        name = request.form.get('name')
+        patronymic = request.form.get('patronymic')
+        phone = request.form.get('phone')
+        city = request.form.get('city')
+        street = request.form.get('street')
+        zip_code = request.form.get('zip_code')
+        percent = request.form.get('percent')
+
+        if not card_number or not surname or not name or not phone or not percent:
+            flash("❌ Заповніть усі обов'язкові поля.")
+            return render_template('add_customer.html')
+
+        new_cust = {
+            "card_number": card_number.strip(),
+            "surname": surname.strip(),
+            "name": name.strip(),
+            "patronymic": patronymic.strip() if patronymic else "",
+            "phone": phone.strip(),
+            "city": city.strip() if city else "",
+            "street": street.strip() if street else "",
+            "zip_code": zip_code.strip() if zip_code else "",
+            "percent": int(percent)
+        }
+
+        if customer_dao.add_customer(new_cust):
+            flash(f"✅ Клієнта {surname} {name} успішно зареєстровано!")
+            return redirect(url_for('customers'))
+        else:
+            flash("❌ Не вдалося створити картку. Можливо, такий номер картки вже зайнятий.")
+            return render_template('add_customer.html')
+
+    return render_template('add_customer.html')
+
+
+@app.route('/customers/edit/<card_number>', methods=['GET', 'POST'])
+def edit_customer_route(card_number):
+    if not session.get('user_role'):
+        flash("Авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+
+    cust = customer_dao.get_customer_by_card(card_number)
+    if not cust:
+        flash("❌ Клієнта не знайдено!")
+        return redirect(url_for('customers'))
+
+    if request.method == 'POST':
+        surname = request.form.get('surname')
+        name = request.form.get('name')
+        patronymic = request.form.get('patronymic')
+        phone = request.form.get('phone')
+        city = request.form.get('city')
+        street = request.form.get('street')
+        zip_code = request.form.get('zip_code')
+        percent = request.form.get('percent')
+
+        if not surname or not name or not phone or not percent:
+            flash("❌ Обов'язкові поля не можуть бути порожніми!")
+            return render_template('edit_customer.html', cust=cust)
+
+        updated_cust = {
+            "surname": surname.strip(),
+            "name": name.strip(),
+            "patronymic": patronymic.strip() if patronymic else "",
+            "phone": phone.strip(),
+            "city": city.strip() if city else "",
+            "street": street.strip() if street else "",
+            "zip_code": zip_code.strip() if zip_code else "",
+            "percent": int(percent)
+        }
+
+        if customer_dao.update_customer(card_number, updated_cust):
+            flash(f"✅ Дані клієнта {surname} успішно оновлено!")
+            return redirect(url_for('customers'))
+        else:
+            flash("❌ Не вдалося зберегти зміни.")
+            return render_template('edit_customer.html', cust=cust)
+
+    return render_template('edit_customer.html', cust=cust)
+
+
+@app.route('/customers/delete/<card_number>', methods=['POST'])
+def delete_customer_route(card_number):
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено! Лише менеджер може видаляти клієнтів.")
+        return redirect(url_for('customers'))
+
+    if customer_dao.delete_customer(card_number):
+        flash("✅ Картку клієнта успішно видалено з бази.")
+    else:
+        flash("❌ Не вдалося видалити картку. Можливо, цей клієнт вже робив покупки й зафіксований у чеках.")
+        
+    return redirect(url_for('customers'))
 
 if __name__ == '__main__':
     app.run(debug=True)

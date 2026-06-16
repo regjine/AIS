@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Редагувати клієнта - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Редагування профілю постійного покупця{% endblock %}
+
+{% block content %}
+<style>
+    .form-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 650px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
+    .btn-submit { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    .btn-submit:hover { background: #0056b3; }
+    .error-alert { background: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px; border-left: 5px solid #dc3545; font-weight: bold; }
+</style>
+
+<div class="form-container">
+    <a href="/customers" style="text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 20px;">← Назад до списку покупців</a>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="error-alert">
+            {% for message in messages %}
+              <div>{{ message }}</div>
+            {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form action="/customers/edit/{{ cust.card_number }}" method="POST">
+        
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>Номер картки (Блоковано)</label>
+                <input type="text" name="card_number" class="form-control" value="{{ cust.card_number }}" readonly style="background: #e9ecef; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+                <label>Знижка (%)*</label>
+                <input type="number" name="percent" class="form-control" min="1" max="100" value="{{ cust.percent }}" required>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>Прізвище*</label>
+                <input type="text" name="surname" class="form-control" value="{{ cust.surname }}" required>
+            </div>
+            <div class="form-group">
+                <label>Ім'я*</label>
+                <input type="text" name="name" class="form-control" value="{{ cust.name }}" required>
+            </div>
+            <div class="form-group">
+                <label>По-батькові</label>
+                <input type="text" name="patronymic" class="form-control" value="{{ cust.patronymic }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Номер телефону*</label>
+            <input type="text" name="phone" class="form-control" value="{{ cust.phone }}" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>Місто</label>
+                <input type="text" name="city" class="form-control" value="{{ cust.city }}">
+            </div>
+            <div class="form-group">
+                <label>Вулиця</label>
+                <input type="text" name="street" class="form-control" value="{{ cust.street }}">
+            </div>
+            <div class="form-group">
+                <label>Індекс</label>
+                <input type="text" name="zip_code" class="form-control" value="{{ cust.zip_code }}">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Зберегти зміни</button>
+    </form>
+</div>
+{% endblock %}

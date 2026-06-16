@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Клієнти - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}База постійних покупців{% endblock %}
+
+{% block content %}
+<style>
+    .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 20px; }
+    .cust-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .cust-table th, .cust-table td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
+    .cust-table th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+    .cust-table tr:hover { background-color: #fcfcfc; }
+    .badge-percent { background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.95em; }
+    .btn-add { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; }
+    .btn-add:hover { background: #0056b3; }
+    .action-link { text-decoration: none; color: #007bff; margin-right: 10px; font-weight: 500; }
+    .action-link:hover { text-decoration: underline; }
+    .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: 500; padding: 0; font-family: inherit; font-size: inherit; }
+    .action-del:hover { text-decoration: underline; }
+</style>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div style="margin-bottom: 20px; padding: 12px; background: #d4edda; color: #155724; border-radius: 4px;">
+        {% for message in messages %}
+          <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div>
+    <a href="/customers/add" class="btn-add">+ Реєстрація нового клієнта</a>
+</div>
+
+<div class="table-container">
+    <table class="cust-table">
+        <thead>
+            <tr>
+                <th>Номер картки</th>
+                <th>ПІБ Клієнта</th>
+                <th>Телефон</th>
+                <th>Знижка</th>
+                <th>Адреса проживання</th>
+                <th>Індекс</th>
+                <th>Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cust in customers %}
+            <tr>
+                <td style="font-family: monospace; font-weight: bold; color: #444;">{{ cust.card_number }}</td>
+                <td style="font-weight: 600; color: #111;">
+                    {{ cust.surname }} {{ cust.name }} {{ cust.patronymic }}
+                </td>
+                <td>{{ cust.phone }}</td>
+                <td><span class="badge-percent">{{ cust.percent }}%</span></td>
+                <td style="color: #555;">
+                    {% if cust.city != '—' or cust.street != '—' %}
+                        м. {{ cust.city }}, вул. {{ cust.street }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td style="font-family: monospace; color: #666;">{{ cust.zip_code }}</td>
+                <td>
+                    <a href="/customers/edit/{{ cust.card_number }}" class="action-link">Редагувати</a>
+                    <form action="/customers/delete/{{ cust.card_number }}" method="POST" style="display:inline; margin:0;"
+                          onsubmit="return confirm('Видалити картку клієнта {{ cust.surname }} з бази?');">
+                        <button type="submit" class="action-del">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #666; font-style: italic;">У базі даних немає зареєстрованих постійних клієнтів.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
