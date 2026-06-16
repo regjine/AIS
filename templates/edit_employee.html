@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Редагувати співробітника - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Редагування даних співробітника{% endblock %}
+
+{% block content %}
+<style>
+    .form-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 600px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
+    .btn-submit { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    .btn-submit:hover { background: #0056b3; }
+    .error-alert { background: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px; border-left: 5px solid #dc3545; font-weight: bold; }
+</style>
+
+<div class="form-container">
+    <a href="/employees" style="text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 20px;">← Назад до списку</a>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="error-alert">
+            {% for message in messages %}
+              <div>{{ message }}</div>
+            {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form action="/employees/edit/{{ emp.id }}" method="POST">
+        <div class="form-group">
+            <label>ID Співробітника (Зміна неможлива)</label>
+            <input type="text" name="id" class="form-control" value="{{ emp.id }}" readonly style="background: #e9ecef; cursor: not-allowed;">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>Прізвище</label>
+                <input type="text" name="surname" class="form-control" value="{{ emp.surname }}" required>
+            </div>
+            <div class="form-group">
+                <label>Ім'я</label>
+                <input type="text" name="name" class="form-control" value="{{ emp.name }}" required>
+            </div>
+            <div class="form-group">
+                <label>По батькові</label>
+                <input type="text" name="patronymic" class="form-control" value="{{ emp.patronymic }}">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Посада</label>
+                <select name="role" class="form-control" required>
+                    <option value="Cashier" {% if emp.role == 'Cashier' %}selected{% endif %}>Касир (Cashier)</option>
+                    <option value="Manager" {% if emp.role == 'Manager' %}selected{% endif %}>Менеджер (Manager)</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Зарплата (грн)</label>
+                <input type="number" step="0.01" name="salary" class="form-control" value="{{ '%.2f'|format(emp.salary) }}" required>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Дата народження</label>
+                <input type="date" name="date_of_birth" class="form-control" value="{{ emp.date_of_birth.strftime('%Y-%m-%d') if emp.date_of_birth else '' }}" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Дата початку роботи</label>
+                <input type="date" name="date_of_start" class="form-control" value="{{ emp.date_of_start.strftime('%Y-%m-%d') if emp.date_of_start else '' }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Номер телефону</label>
+            <input type="text" name="phone" class="form-control" value="{{ emp.phone }}" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 3fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>Місто</label>
+                <input type="text" name="city" class="form-control" value="{{ emp.city }}" required>
+            </div>
+            <div class="form-group">
+                <label>Вулиця</label>
+                <input type="text" name="street" class="form-control" value="{{ emp.street }}" required>
+            </div>
+            <div class="form-group">
+                <label>Індекс</label>
+                <input type="text" name="zip" class="form-control" value="{{ emp.zip }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Новий пароль (Залиште порожнім, щоб не змінювати)</label>
+            <input type="password" name="password" class="form-control" placeholder="Введіть новий пароль, лише якщо хочете його змінити">
+        </div>
+
+        <button type="submit" class="btn-submit">Зберегти зміни</button>
+    </form>
+</div>
+{% endblock %}

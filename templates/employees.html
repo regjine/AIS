@@ -82,8 +82,12 @@
             <div><b>Адреса:</b> м. {{ emp.city }}, вул. {{ emp.street }}, {{ emp.zip_code }}</div>
         </div>
         
-        <div style="margin-top: 15px; display: flex; gap: 10px;">
-            <button style="flex: 1; padding: 8px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f8f9fa;">Редагувати</button>
+        <div style="margin-top: 15px; display: flex; gap: 10px; width: 100%;">
+            <a href="/employees/edit/{{ emp.id }}" style="flex: 1; text-decoration: none;">
+                <button type="button" style="width: 100%; padding: 8px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f8f9fa;">
+                    Редагувати
+                </button>
+            </a>
     
             <form action="/employees/delete/{{ emp.id }}" method="POST" style="flex: 1; margin: 0;" 
                 onsubmit="return confirm('Ви впевнені, що хочете видалити співробітника {{ emp.surname }} {{ emp.name }}?');">

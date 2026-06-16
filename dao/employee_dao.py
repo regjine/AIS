@@ -5,33 +5,83 @@ class EmployeeDAO:
         self.db = DatabaseConnection()
 
     def get_employee_by_id(self, employee_id):
-        """Looks up an employee by their ID and returns a dictionary with their details, or None if not found."""
-
-        sql_query = "SELECT id_employee, empl_surname, empl_name, empl_role, password FROM Employee WHERE id_employee = ?"
-        
+        """
+        Looks up an employee by their ID and returns a dictionary with their details, or None if not found.
+        """
+        sql_query = """
+            SELECT id_employee, empl_surname, empl_name, empl_patronymic, 
+                   empl_role, salary, date_of_birth, date_of_start, 
+                   phone_number, city, street, zip_code
+            FROM Employee 
+            WHERE id_employee = ?
+        """
         conn = self.db.get_connection()
         if not conn:
             return None
-            
-        cursor = conn.cursor()
         try:
+            cursor = conn.cursor()
             cursor.execute(sql_query, (employee_id,))
-            row = cursor.fetchone() #this will return a single row or None if no match is found
-            
+            row = cursor.fetchone()
             if row:
                 return {
-                    "id": row[0],
-                    "surname": row[1],
-                    "name": row[2],
-                    "role": row[3],
-                    "password_hash": row[4]
+                    "id": row.id_employee, "surname": row.empl_surname, "name": row.empl_name,
+                    "patronymic": row.empl_patronymic if row.empl_patronymic else "",
+                    "role": row.empl_role, "salary": row.salary,
+                    "date_of_birth": row.date_of_birth, "date_of_start": row.date_of_start,
+                    "phone": row.phone_number, "city": row.city, "street": row.street, "zip": row.zip_code
                 }
             return None
         except Exception as e:
-            print(f"❌ Failed to execute SQL query in EmployeeDAO:\n{e}")
+            print(f"❌ Failed to retrieve employee {employee_id}: {e}")
             return None
         finally:
             conn.close() #close connection
+
+    def update_employee(self, emp_id, emp_data, update_password=False):
+        """
+        Updates an employee's details in the database.
+        If update_password=True, the password is also updated.
+        """
+        if update_password:
+            sql_query = """
+                UPDATE Employee SET 
+                    empl_surname=?, empl_name=?, empl_patronymic=?, empl_role=?, 
+                    salary=?, date_of_birth=?, date_of_start=?, phone_number=?, 
+                    city=?, street=?, zip_code=?, password=?
+                WHERE id_employee=?
+            """
+            params = (
+                emp_data['surname'], emp_data['name'], emp_data['patronymic'], emp_data['role'],
+                emp_data['salary'], emp_data['date_of_birth'], emp_data['date_of_start'], emp_data['phone'],
+                emp_data['city'], emp_data['street'], emp_data['zip'], emp_data['password_hash'], emp_id
+            )
+        else:
+            sql_query = """
+                UPDATE Employee SET 
+                    empl_surname=?, empl_name=?, empl_patronymic=?, empl_role=?, 
+                    salary=?, date_of_birth=?, date_of_start=?, phone_number=?, 
+                    city=?, street=?, zip_code=?
+                WHERE id_employee=?
+            """
+            params = (
+                emp_data['surname'], emp_data['name'], emp_data['patronymic'], emp_data['role'],
+                emp_data['salary'], emp_data['date_of_birth'], emp_data['date_of_start'], emp_data['phone'],
+                emp_data['city'], emp_data['street'], emp_data['zip'], emp_id
+            )
+
+        conn = self.db.get_connection()
+        if not conn:
+            return False
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql_query, params)
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"❌ Failed to update employee {emp_id}: {e}")
+            return False
+        finally:
+            conn.close()
 
     def get_all_employees(self):
         """
