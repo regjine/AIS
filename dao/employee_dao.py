@@ -99,6 +99,48 @@ class EmployeeDAO:
         finally:
             conn.close()
 
+    def add_employee(self, emp_data):
+        """
+        Adds a new employee to the database.
+        emp_data should be a dictionary containing all necessary fields, including 'password_hash'.
+        """
+        sql_query = """
+            INSERT INTO Employee (
+                id_employee, empl_surname, empl_name, empl_patronymic, 
+                empl_role, salary, date_of_birth, date_of_start, 
+                phone_number, city, street, zip_code, password
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        conn = self.db.get_connection()
+        if not conn:
+            return False
+            
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql_query, (
+                emp_data['id'],
+                emp_data['surname'],
+                emp_data['name'],
+                emp_data['patronymic'],
+                emp_data['role'],
+                emp_data['salary'],
+                emp_data['date_of_birth'], 
+                emp_data['date_of_start'],
+                emp_data['phone'],
+                emp_data['city'],
+                emp_data['street'],
+                emp_data['zip'],
+                emp_data['password_hash'] 
+            ))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"❌ Failed to add an employee: {e}")
+            return False
+        finally:
+            conn.close()
+
 #test
 if __name__ == "__main__":
     dao = EmployeeDAO()

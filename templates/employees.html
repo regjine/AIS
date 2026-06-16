@@ -59,9 +59,11 @@
 </style>
 
 <div style="margin-bottom: 20px;">
-    <button style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-        + Додати співробітника
-    </button>
+    <a href="/employees/add" style="text-decoration: none;">
+        <button style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            + Додати співробітника
+        </button>
+    </a>
 </div>
 
 <div class="cards-grid">
@@ -73,10 +75,10 @@
         
         <div class="emp-details">
             <div><b>Телефон:</b> {{ emp.phone }}</div>
-            <div><b>Зарплата:</b> {{ emp.salary }} грн</div>
+            <div><b>Зарплата:</b> {{ "%.2f"|format(emp.salary) }} грн</div>
             <div><b>ID:</b> {{ emp.id }}</div>
-        <div><b>Дата народження:</b> {{ emp.date_of_birth.strftime('%d.%m.%Y')}}</div>
-        <div><b>Дата початку роботи:</b> {{ emp.date_of_start.strftime('%d.%m.%Y')}}</div>
+            <div><b>Дата народження:</b> {{ emp.date_of_birth.strftime('%d.%m.%Y')}}</div>
+            <div><b>Дата початку роботи:</b> {{ emp.date_of_start.strftime('%d.%m.%Y')}}</div>
             <div><b>Адреса:</b> м. {{ emp.city }}, вул. {{ emp.street }}, {{ emp.zip_code }}</div>
         </div>
         

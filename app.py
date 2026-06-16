@@ -4,6 +4,9 @@ from services.auth_service import AuthService
 from dao.employee_dao import EmployeeDAO
 employee_dao = EmployeeDAO()
 
+from datetime import datetime, date
+import bcrypt
+
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
 
@@ -77,6 +80,71 @@ def delete_employee_route(emp_id):
         flash("❌ Failed to delete an employee. They might be linked to existing receipts.")
         
     return redirect(url_for('employees'))
+    
+@app.route('/employees/add', methods=['GET', 'POST'])
+def add_employee_route():
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        #gather data from the form
+        emp_id = request.form.get('id')
+        surname = request.form.get('surname')
+        name = request.form.get('name')
+        patronymic = request.form.get('patronymic')
+        role = request.form.get('role')
+        salary = float(request.form.get('salary'))
+        phone = request.form.get('phone')
+        city = request.form.get('city')
+        street = request.form.get('street')
+        zip_code = request.form.get('zip')
+        plain_password = request.form.get('password')
+        
+        #parsing date strings to date objects
+        dob_str = request.form.get('date_of_birth')
+        dos_str = request.form.get('date_of_start')
+        dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
+        dos = datetime.strptime(dos_str, '%Y-%m-%d').date()
+
+        #Корпоративні обмеження    
+        #1. Перевірка довжини телефону (max 13 символів)
+        if len(phone) > 13:
+            flash("❌ Exception: Phone number cannot exceed 13 characters!")
+            return render_template('add_employee.html')
+
+        # 2. Перевірка віку (мінімум 18 років)
+        today = date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        if age < 18:
+            flash("❌ Exception: Employee must be at least 18 years old!")
+            return render_template('add_employee.html')
+            
+        # 3. Перевірка на від'ємні значення зарплати
+        if salary < 0:
+            flash("❌ Exception: Salary cannot be negative!")
+            return render_template('add_employee.html')
+
+        #hash the password before saving to database
+        hashed = bcrypt.hashpw(plain_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        #make a dictionary with all employee data to pass to DAO
+        new_emp = {
+            "id": emp_id, "surname": surname, "name": name, "patronymic": patronymic,
+            "role": role, "salary": salary, "date_of_birth": dob, "date_of_start": dos,
+            "phone": phone, "city": city, "street": street, "zip": zip_code,
+            "password_hash": hashed
+        }
+
+        #write to Access
+        if employee_dao.add_employee(new_emp):
+            flash(f"✅ Employee {surname} {name} has been successfully added!")
+            return redirect(url_for('employees'))
+        else:
+            flash("❌ Failed to save employee. Possible duplicate ID.")
+            return render_template('add_employee.html')
+
+    return render_template('add_employee.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
