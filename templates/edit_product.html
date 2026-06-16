@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Редагувати товар - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Редагування товару в каталозі{% endblock %}
+
+{% block content %}
+<style>
+    .form-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 600px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
+    .btn-submit { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    .btn-submit:hover { background: #0056b3; }
+    .error-alert { background: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px; border-left: 5px solid #dc3545; font-weight: bold; }
+</style>
+
+<div class="form-container">
+    <a href="/products" style="text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 20px;">← Назад до каталогу</a>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="error-alert">
+            {% for message in messages %}
+              <div>{{ message }}</div>
+            {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form action="/products/edit/{{ prod.id }}" method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 15px;">
+            <div class="form-group">
+                <label>ID (Блоковано)</label>
+                <input type="number" name="id" class="form-control" value="{{ prod.id }}" readonly style="background: #e9ecef; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+                <label>Назва товару</label>
+                <input type="text" name="name" class="form-control" value="{{ prod.name }}" required>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>Категорія товару</label>
+                <select name="category_number" class="form-control" required>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if cat.id == prod.category_number %}selected{% endif %}>
+                            {{ cat.name }} (ID: {{ cat.id }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Характеристики / Опис товару</label>
+            <textarea name="characteristics" class="form-control" rows="4">{{ prod.characteristics }}</textarea>
+        </div>
+
+        <button type="submit" class="btn-submit">Зберегти зміни</button>
+    </form>
+</div>
+{% endblock %}

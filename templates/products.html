@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог товарів - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Загальний каталог товарів (Product){% endblock %}
+
+{% block content %}
+<style>
+    .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 20px; }
+    .prod-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .prod-table th, .prod-table td { padding: 12px 15px; border-bottom: 1px solid #e0e0e0; }
+    .prod-table th { background-color: #f8f9fa; color: #333; font-weight: bold; }
+    .prod-table tr:hover { background-color: #fcfcfc; }
+    .badge-cat { background: #e2e6ea; color: #495057; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500; }
+    .btn-add { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; }
+    .btn-add:hover { background: #0056b3; }
+    .action-link { text-decoration: none; color: #007bff; margin-right: 10px; font-weight: 500; }
+    .action-link:hover { text-decoration: underline; }
+    .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: 500; padding: 0; font-family: inherit; font-size: inherit; }
+    .action-del:hover { text-decoration: underline; }
+</style>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div style="margin-bottom: 20px; padding: 12px; background: #d4edda; color: #155724; border-radius: 4px;">
+        {% for message in messages %}
+          <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if session.get('user_role') == 'Manager' %}
+<div>
+    <a href="/products/add" class="btn-add">+ Додати новий товар до каталогу</a>
+</div>
+{% endif %}
+
+<div class="table-container">
+    <table class="prod-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Назва товару</th>
+                <th>Категорія</th>
+                <th>Характеристики</th>
+                {% if session.get('user_role') == 'Manager' %}
+                <th>Дії</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for prod in products %}
+            <tr>
+                <td style="font-weight: bold; color: #666;">#{{ prod.id }}</td>
+                <td style="font-weight: 600; color: #111;">{{ prod.name }}</td>
+                <td><span class="badge-cat">{{ prod.category_name }}</span></td>
+                <td style="color: #666; font-size: 0.95em;">{{ prod.characteristics }}</td>
+                
+                {% if session.get('user_role') == 'Manager' %}
+                <td>
+                    <a href="/products/edit/{{ prod.id }}" class="action-link">Редагувати</a>
+                    <form action="/products/delete/{{ prod.id }}" method="POST" style="display:inline; margin:0;"
+                          onsubmit="return confirm('Видалити товар {{ prod.name }} з каталогу?');">
+                        <button type="submit" class="action-del">Видалити</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #666; font-style: italic;">Каталог товарів порожній.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -10,6 +10,9 @@ import bcrypt
 from dao.category_dao import CategoryDAO
 category_dao = CategoryDAO()
 
+from dao.product_dao import ProductDAO
+product_dao = ProductDAO()
+
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
 
@@ -288,6 +291,102 @@ def delete_category_route(cat_id):
         flash("❌ Не вдалося видалити категорію. Можливо, до неї прив'язані існуючі товари.")
         
     return redirect(url_for('categories'))
+
+@app.route('/products')
+def products():
+    if not session.get('user_role'):
+        flash("Будь ласка, авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+        
+    all_prods = product_dao.get_all_products()
+    return render_template('products.html', products=all_prods)
+
+@app.route('/products/add', methods=['GET', 'POST'])
+def add_product_route():
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('products'))
+
+    categories_list = category_dao.get_all_categories()
+
+    if request.method == 'POST':
+        prod_id = request.form.get('id')
+        name = request.form.get('name')
+        category_number = request.form.get('category_number')
+        characteristics = request.form.get('characteristics')
+
+        if not prod_id or not name or not category_number:
+            flash("❌ Будь ласка, заповніть усі обов'язкові поля!")
+            return render_template('add_product.html', categories=categories_list)
+
+        if int(prod_id) <= 0:
+            flash("❌ ID товару має бути більшим за 0!")
+            return render_template('add_product.html', categories=categories_list)
+
+        new_prod = {
+            "id": int(prod_id),
+            "category_number": int(category_number),
+            "name": name.strip(),
+            "characteristics": characteristics.strip() if characteristics else ""
+        }
+
+        if product_dao.add_product(new_prod):
+            flash(f"✅ Товар {name} успішно додано до каталогу!")
+            return redirect(url_for('products'))
+        else:
+            flash("❌ Не вдалося зберегти товар. Можливо, товар з таким ID вже існує.")
+            return render_template('add_product.html', categories=categories_list)
+
+    return render_template('add_product.html', categories=categories_list)
+
+@app.route('/products/edit/<int:prod_id>', methods=['GET', 'POST'])
+def edit_product_route(prod_id):
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('products'))
+
+    prod = product_dao.get_product_by_id(prod_id)
+    if not prod:
+        flash("❌ Товар не знайдено в каталозі!")
+        return redirect(url_for('products'))
+
+    categories_list = category_dao.get_all_categories()
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        category_number = request.form.get('category_number')
+        characteristics = request.form.get('characteristics')
+
+        if not name or not category_number:
+            flash("❌ Усі обов'язкові поля мають бути заповнені!")
+            return render_template('edit_product.html', prod=prod, categories=categories_list)
+
+        updated_prod = {
+            "category_number": int(category_number),
+            "name": name.strip(),
+            "characteristics": characteristics.strip()
+        }
+
+        if product_dao.update_product(prod_id, updated_prod):
+            flash(f"✅ Дані товару {name} успішно оновлено!")
+            return redirect(url_for('products'))
+        else:
+            flash("❌ Не вдалося зберегти зміни в базі даних.")
+            return render_template('edit_product.html', prod=prod, categories=categories_list)
+
+    return render_template('edit_product.html', prod=prod, categories=categories_list)
+
+
+@app.route('/products/delete/<int:prod_id>', methods=['POST'])
+def delete_product_route(prod_id):
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('products'))
+
+    if not product_dao.delete_product(prod_id):
+        flash("❌ Не вдалося видалити товар. Можливо, на нього посилаються товари, які вже лежать на полицях магазину.")
+        
+    return redirect(url_for('products'))
 
 if __name__ == '__main__':
     app.run(debug=True)
