@@ -56,5 +56,27 @@ def employees():
     all_emps = employee_dao.get_all_employees()
     return render_template('employees.html', employees=all_emps)
 
+@app.route('/employees/delete/<emp_id>', methods=['POST'])
+def delete_employee_route(emp_id):
+    #privilege check: only manager can delete employees
+    if session.get('user_role') != 'Manager':
+        flash("У вас немає прав для виконання цієї дії!")
+        return redirect(url_for('home'))
+    
+    #cannot delete yourself
+    if emp_id == session.get('user_id'):
+        flash("❌ Ви не можете видалити власного користувача, під яким зараз авторизовані!")
+        return redirect(url_for('employees'))
+    
+    #delete 
+    success = employee_dao.delete_employee(emp_id)
+    
+    if success:
+        flash("✅ An employee has been successfully deleted.")
+    else:
+        flash("❌ Failed to delete an employee. They might be linked to existing receipts.")
+        
+    return redirect(url_for('employees'))
+
 if __name__ == '__main__':
     app.run(debug=True)

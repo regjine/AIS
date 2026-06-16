@@ -4,6 +4,16 @@
 
 {% block header_title %}Співробітники супермаркету{% endblock %}
 
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div style="margin-bottom: 20px; padding: 15px; background: #e2f0d9; color: #385723; border-radius: 5px; border-left: 5px solid #70ad47; font-weight: bold;">
+        {% for message in messages %}
+          <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 {% block content %}
 <style>
     .cards-grid {
@@ -71,8 +81,14 @@
         </div>
         
         <div style="margin-top: 15px; display: flex; gap: 10px;">
-            <button style="flex: 1; padding: 5px; cursor: pointer;">Редагувати</button>
-            <button style="flex: 1; padding: 5px; cursor: pointer; color: red;">Видалити</button>
+            <button style="flex: 1; padding: 8px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f8f9fa;">Редагувати</button>
+    
+            <form action="/employees/delete/{{ emp.id }}" method="POST" style="flex: 1; margin: 0;" 
+                onsubmit="return confirm('Ви впевнені, що хочете видалити співробітника {{ emp.surname }} {{ emp.name }}?');">
+                <button type="submit" style="width: 100%; padding: 8px; cursor: pointer; color: white; background: #dc3545; border: 1px solid #dc3545; border-radius: 4px; font-weight: bold;">
+                    Видалити
+                </button>
+            </form>
         </div>
     </div>
     {% endfor %}

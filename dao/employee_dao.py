@@ -77,6 +77,28 @@ class EmployeeDAO:
         finally:
             conn.close()
 
+    def delete_employee(self, employee_id):
+        """
+        Deletes an employee from the database by their ID.
+        Returns True if deletion was successful, False otherwise.
+        """
+        sql_query = "DELETE FROM Employee WHERE id_employee = ?"
+        
+        conn = self.db.get_connection()
+        if not conn:
+            return False
+            
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql_query, (employee_id,))
+            conn.commit() #commit the changes to the database
+            return True
+        except Exception as e:
+            print(f"❌ Failed to delete employee {employee_id}: {e}")
+            return False
+        finally:
+            conn.close()
+
 #test
 if __name__ == "__main__":
     dao = EmployeeDAO()
