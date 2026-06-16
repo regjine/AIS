@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from services.auth_service import AuthService
 
+from dao.employee_dao import EmployeeDAO
+employee_dao = EmployeeDAO()
+
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
 
@@ -13,12 +16,7 @@ def home():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    #welcome page for logged in users
-    return f"""
-        <h1>Вітаємо, {session['user_name']}!</h1>
-        <p>Ваша посада: <b>{session['user_role']}</b></p>
-        <a href='/logout'>Вийти з системи</a>
-    """
+    return render_template('home.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -47,6 +45,16 @@ def login():
 def logout():
     session.clear() 
     return redirect(url_for('login'))
+
+@app.route('/employees')
+def employees():
+    #should be manager to access this page
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено! У вас немає прав для перегляду цієї сторінки.")
+        return redirect(url_for('home'))
+    
+    all_emps = employee_dao.get_all_employees()
+    return render_template('employees.html', employees=all_emps)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Співробітники - АІС ZLAGODA{% endblock %}
+
+{% block header_title %}Співробітники супермаркету{% endblock %}
+
+{% block content %}
+<style>
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 20px;
+    }
+    
+    .employee-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border-left: 5px solid #007bff;
+        transition: 0.3s;
+    }
+    .employee-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .role-manager { border-left-color: #ffc107; }
+    .role-cashier { border-left-color: #28a745; }
+    
+    .emp-name {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    .emp-role {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .emp-details {
+        font-size: 0.95em;
+        color: #444;
+        line-height: 1.6;
+    }
+</style>
+
+<div style="margin-bottom: 20px;">
+    <button style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+        + Додати співробітника
+    </button>
+</div>
+
+<div class="cards-grid">
+    {% for emp in employees %}
+    <div class="employee-card {% if emp.role == 'Manager' %}role-manager{% else %}role-cashier{% endif %}">
+        
+        <div class="emp-name">{{ emp.surname }} {{ emp.name }} {{ emp.patronymic }}</div>
+        <div class="emp-role">{{ emp.role }}</div>
+        
+        <div class="emp-details">
+            <div><b>Телефон:</b> {{ emp.phone }}</div>
+            <div><b>Зарплата:</b> {{ emp.salary }} грн</div>
+            <div><b>ID:</b> {{ emp.id }}</div>
+        <div><b>Дата народження:</b> {{ emp.date_of_birth.strftime('%d.%m.%Y')}}</div>
+        <div><b>Дата початку роботи:</b> {{ emp.date_of_start.strftime('%d.%m.%Y')}}</div>
+            <div><b>Адреса:</b> м. {{ emp.city }}, вул. {{ emp.street }}, {{ emp.zip_code }}</div>
+        </div>
+        
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button style="flex: 1; padding: 5px; cursor: pointer;">Редагувати</button>
+            <button style="flex: 1; padding: 5px; cursor: pointer; color: red;">Видалити</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

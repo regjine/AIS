@@ -33,6 +33,50 @@ class EmployeeDAO:
         finally:
             conn.close() #close connection
 
+    def get_all_employees(self):
+        """
+        Get a list of all employees with their details sorted by surname.
+        Returns a list of dictionaries, each representing an employee.
+        """
+        sql_query = """
+            SELECT id_employee, empl_surname, empl_name, empl_patronymic, 
+            empl_role, salary, date_of_birth, date_of_start, phone_number, city, street, zip_code
+            FROM Employee 
+            ORDER BY empl_surname ASC
+        """
+        
+        conn = self.db.get_connection()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        employees_list = []
+        try:
+            cursor.execute(sql_query)
+            rows = cursor.fetchall() 
+            
+            for row in rows:
+                employees_list.append({
+                    "id": row[0],
+                    "surname": row[1],
+                    "name": row[2],
+                    "patronymic": row[3] if row[3] else "", 
+                    "role": row[4],
+                    "salary": row[5],
+                    "date_of_birth": row[6],
+                    "date_of_start": row[7],
+                    "phone": row[8],
+                    "city": row[9],
+                    "street": row[10],
+                    "zip_code": row[11]
+                })
+            return employees_list
+        except Exception as e:
+            print(f"❌ Exception while fetching all employees: {e}")
+            return []
+        finally:
+            conn.close()
+
 #test
 if __name__ == "__main__":
     dao = EmployeeDAO()
