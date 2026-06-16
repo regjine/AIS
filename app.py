@@ -7,6 +7,9 @@ employee_dao = EmployeeDAO()
 from datetime import datetime, date
 import bcrypt
 
+from dao.category_dao import CategoryDAO
+category_dao = CategoryDAO()
+
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
 
@@ -213,6 +216,78 @@ def edit_employee_route(emp_id):
             return render_template('edit_employee.html', emp=emp)
 
     return render_template('edit_employee.html', emp=emp)
+
+@app.route('/categories')
+def categories():
+    if not session.get('user_role'):
+        flash("Будь ласка, авторизуйтеся в системі!")
+        return redirect(url_for('login'))
+        
+    all_cats = category_dao.get_all_categories() 
+    return render_template('categories.html', categories=all_cats)
+
+@app.route('/categories/add', methods=['GET', 'POST'])
+def add_category_route():
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('categories'))
+
+    if request.method == 'POST':
+        cat_id = request.form.get('category_id')
+        cat_name = request.form.get('category_name')
+
+        if not cat_id or not cat_name or cat_name.strip() == "":
+            flash("❌ Усі поля обов'язкові для заповнення!")
+            return render_template('add_category.html')
+
+        if int(cat_id) <= 0:
+            flash("❌ ID категорії має бути більшим за 0!")
+            return render_template('add_category.html')
+
+        if category_dao.add_category(int(cat_id), cat_name.strip()):
+            return redirect(url_for('categories'))
+        else:
+            flash("❌ Не вдалося зберегти категорію. Можливо, категорія з таким ID вже існує в системі.")
+            return render_template('add_category.html')
+
+    return render_template('add_category.html')
+
+@app.route('/categories/edit/<int:cat_id>', methods=['GET', 'POST'])
+def edit_category_route(cat_id):
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('categories'))
+
+    cat = category_dao.get_category_by_id(cat_id)
+    if not cat:
+        flash("❌ Категорію не знайдено!")
+        return redirect(url_for('categories'))
+
+    if request.method == 'POST':
+        new_name = request.form.get('category_name')
+
+        if not new_name or new_name.strip() == "":
+            flash("❌ Назва категорії не може бути порожньою!")
+            return render_template('edit_category.html', cat=cat)
+
+        if category_dao.update_category(cat_id, new_name.strip()):
+            return redirect(url_for('categories'))
+        else:
+            flash("❌ Не вдалося зберегти зміни в базі даних.")
+            return render_template('edit_category.html', cat=cat)
+
+    return render_template('edit_category.html', cat=cat)
+
+@app.route('/categories/delete/<int:cat_id>', methods=['POST'])
+def delete_category_route(cat_id):
+    if session.get('user_role') != 'Manager':
+        flash("Доступ заборонено!")
+        return redirect(url_for('categories'))
+
+    if not category_dao.delete_category(cat_id):
+        flash("❌ Не вдалося видалити категорію. Можливо, до неї прив'язані існуючі товари.")
+        
+    return redirect(url_for('categories'))
 
 if __name__ == '__main__':
     app.run(debug=True)
