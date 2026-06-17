@@ -22,6 +22,9 @@ customer_dao = CustomerDAO()
 from dao.check_dao import CheckDAO
 check_dao = CheckDAO()
 
+from dao.analytics_dao import AnalyticsDAO
+analytics_dao = AnalyticsDAO()
+
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_zlagoda' 
 
@@ -789,6 +792,33 @@ def profile():
         return redirect(url_for('index'))
 
     return render_template('profile.html', emp=employee_info)
+
+@app.route('/analytics')
+def analytics():
+    if session.get('user_role') != 'Manager':
+        flash("❌ Доступ заборонено! Тільки для менеджерів.")
+        return redirect(url_for('index'))
+    return render_template('analytics.html')
+
+#обробка першої кнопки (параметричний запит)
+@app.route('/analytics/query1', methods=['POST'])
+def run_query1():
+    if session.get('user_role') != 'Manager':
+        flash("❌ Доступ заборонено!")
+        return redirect(url_for('index'))
+        
+    min_quantity = request.form.get('min_quantity')
+    results = analytics_dao.get_categories_by_promo_quantity(min_quantity)
+    return render_template('analytics.html', q1_results=results, min_q=min_quantity)
+
+#обробка другої кнопки (Подвійне заперечення)
+@app.route('/analytics/query2', methods=['POST'])
+def run_query2():
+    if session.get('user_role') != 'Manager':
+        flash("❌ Доступ заборонено!")
+        return redirect(url_for('index'))
+    results = analytics_dao.get_absolute_promo_buyers()
+    return render_template('analytics.html', q2_results=results)
 
 if __name__ == '__main__':
     app.run(debug=True)
