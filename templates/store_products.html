@@ -12,7 +12,6 @@
     .store-table th { background-color: #f8f9fa; color: #333; font-weight: bold; }
     .store-table tr:hover { background-color: #fcfcfc; }
     
-    /* Стилі для бейджиків стану */
     .badge-promo { background: #dc3545; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
     .badge-regular { background: #28a745; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
     .text-warning-custom { color: #fd7e14; font-weight: bold; }
@@ -23,6 +22,77 @@
     .action-link:hover { text-decoration: underline; }
     .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: 500; padding: 0; font-family: inherit; font-size: inherit; }
     .action-del:hover { text-decoration: underline; }
+
+    .print-header, .print-footer { 
+        display: none; 
+    }
+
+    @media print {
+        @page { 
+            margin: 0; 
+        }
+        body {
+            padding: 1.5cm;
+            background: #fff;
+        }
+
+        .sidebar, .nav-link, button, .btn-add, form, style, 
+        .header, header, .top-bar, [href*="logout"], .logout-btn, a,
+        .no-print {
+            display: none !important;
+        }
+
+        .main-content, .table-container, .store-table {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        .store-table {
+            border-collapse: collapse !important;
+            border: 1.5px solid #000 !important;
+            margin-top: 10px !important;
+        }
+
+        .store-table th, .store-table td {
+            border: 1px solid #000 !important;
+            padding: 8px 10px !important;
+            font-size: 12px !important;
+            color: #000 !important;
+        }
+
+        .store-table th, .badge-promo, .badge-regular, tr[style*="background-color"] {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .print-header {
+            display: flex !important;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-size: 11px;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .print-footer {
+            display: flex !important;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 1.5cm;
+            left: 1.5cm;
+            right: 1.5cm;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+            font-size: 10px;
+            font-family: sans-serif;
+        }
+    }
 </style>
 
 {% with messages = get_flashed_messages() %}
@@ -35,11 +105,20 @@
   {% endif %}
 {% endwith %}
 
-{% if session.get('user_role') == 'Manager' %}
-<div>
-    <a href="/store_products/add" class="btn-add">+ Завезти товар у магазин</a>
+<div class="no-print" style="display: flex; gap: 10px; margin-bottom: 20px;">
+    {% if session.get('user_role') == 'Manager' %}
+        <a href="/store_products/add" class="btn-add">+ Завезти товар у магазин</a>
+    {% endif %}
+    
+    <button onclick="window.print();" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+        🖨️ Згенерувати звіт для друку
+    </button>
 </div>
-{% endif %}
+
+<div class="print-header">
+    <div>АІС "ZLAGODA" — ОФІЦІЙНИЙ ЗВІТ: ТОВАРИ В ТОРГОВОМУ ЗАЛІ</div>
+    <div>Дата генерації: {{ datetime_now.strftime('%d.%m.%Y %H:%M') if datetime_now else '17.06.2026' }}</div>
+</div>
 
 <div class="table-container">
     <table class="store-table">
@@ -51,8 +130,9 @@
                 <th>Кількість в наявності</th>
                 <th>Статус</th>
                 <th>Акційний UPC</th>
+                
                 {% if session.get('user_role') == 'Manager' %}
-                <th>Дії</th>
+                <th class="no-print">Дії</th>
                 {% endif %}
             </tr>
         </thead>
@@ -81,7 +161,7 @@
                 </td>
                 
                 {% if session.get('user_role') == 'Manager' %}
-                <td>
+                <td class="no-print">
                     <a href="/store_products/edit/{{ item.upc }}" class="action-link">Редагувати</a>
                     <form action="/store_products/delete/{{ item.upc }}" method="POST" style="display:inline; margin:0;"
                           onsubmit="return confirm('Прибрати партію з UPC {{ item.upc }} з полиць магазину?');">

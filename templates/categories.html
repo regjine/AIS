@@ -63,6 +63,72 @@
     .cat-btn:hover { background: #e2e6ea; }
     .cat-btn-del { color: #dc3545; border-color: #f5c6cb; }
     .cat-btn-del:hover { background: #f8d7da; }
+
+    .print-table, .print-header, .print-footer { 
+        display: none; 
+    }
+    @media print {
+        @page { 
+            margin: 0; 
+        }
+
+        body {
+            padding: 1.5cm;
+            background: #fff;
+        }
+
+        .category-grid, .sidebar, .nav-link, button, form, style,
+        .header, header, .top-bar, [href*="logout"], .logout-btn, a {
+            display: none !important;
+        }
+
+        .print-table {
+            display: table !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: 1.5px solid #000 !important; 
+            margin-top: 10px !important;
+        }
+
+        .print-table th, .print-table td {
+            border: 1px solid #000 !important; 
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+            color: #000 !important;
+            text-align: left !important;
+        }
+
+        .print-table th {
+            background-color: #f2f2f2 !important;
+            font-weight: bold !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .print-header {
+            display: flex !important;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-size: 11px;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .print-footer {
+            display: flex !important;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 1.5cm;
+            left: 1.5cm;
+            right: 1.5cm;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+            font-size: 10px;
+            font-family: sans-serif;
+        }
+    }
 </style>
 
 {% with messages = get_flashed_messages() %}
@@ -75,15 +141,19 @@
   {% endif %}
 {% endwith %}
 
-{% if session.get('user_role') == 'Manager' %}
-<div>
-    <a href="/categories/add" style="text-decoration: none;">
-        <button style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-            + Створити категорію
-        </button>
-    </a>
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    {% if session.get('user_role') == 'Manager' %}
+        <a href="/categories/add" style="text-decoration: none;">
+            <button style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                + Створити категорію
+            </button>
+        </a>
+    {% endif %}
+    
+    <button onclick="window.print();" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+        🖨️ Згенерувати звіт для друку
+    </button>
 </div>
-{% endif %}
 
 <div class="category-grid">
     {% for cat in categories %}
@@ -106,5 +176,34 @@
     {% else %}
     <div style="color: #666; font-style: italic;">Категорій поки що немає в базі даних.</div>
     {% endfor %}
+</div>
+
+<div class="print-header">
+    <div>АІС "ZLAGODA" — ОФІЦІЙНИЙ ВІДОМІСНИЙ ЗВІТ: КАТЕГОРІЇ ТОВАРІВ</div>
+    <div>Дата генерації: {{ datetime_now.strftime('%d.%m.%Y %H:%M') if datetime_now else '17.06.2026' }}</div>
+</div>
+
+<table class="print-table">
+    <thead>
+        <tr>
+            <th style="width: 25%;">Код категорії (ID)</th>
+            <th>Назва категорії товарів</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cat in categories %}
+        <tr>
+            <td style="font-family: monospace; font-weight: bold; color: #444;">#{{ cat.id }}</td>
+            <td style="font-weight: 600;">{{ cat.name }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="2" style="text-align: center; font-style: italic;">Немає даних</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="print-footer">
 </div>
 {% endblock %}

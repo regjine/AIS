@@ -17,6 +17,79 @@
     .action-view:hover { text-decoration: underline; }
     .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: bold; padding: 0; font-family: inherit; font-size: inherit; }
     .action-del:hover { text-decoration: underline; }
+
+    .print-header, .print-footer { 
+        display: none; 
+    }
+
+    @media print {
+        @page { 
+            margin: 0; 
+        }
+
+        body {
+            padding: 1.5cm;
+            background: #fff;
+        }
+
+        .sidebar, .nav-link, button, .btn-create, form, style, 
+        .header, header, .top-bar, [href*="logout"], .logout-btn, a,
+        th:last-child, td:last-child, .no-print {
+            display: none !important;
+        }
+
+        .main-content, .table-container, .check-table {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        .check-table {
+            border-collapse: collapse !important;
+            border: 1.5px solid #000 !important;
+            margin-top: 10px !important;
+        }
+
+        .check-table th, .check-table td {
+            border: 1px solid #000 !important;
+            padding: 8px 10px !important;
+            font-size: 12px !important;
+            color: #000 !important;
+        }
+
+        .check-table th {
+            background-color: #f2f2f2 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .print-header {
+            display: flex !important;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-size: 11px;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .print-footer {
+            display: flex !important;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 1.5cm;
+            left: 1.5cm;
+            right: 1.5cm;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+            font-size: 10px;
+            font-family: sans-serif;
+        }
+    }
 </style>
 
 {% with messages = get_flashed_messages() %}
@@ -29,11 +102,20 @@
   {% endif %}
 {% endwith %}
 
-{% if session.get('user_role') == 'Cashier' %}
-<div>
-    <a href="/checks/add" class="btn-create">Пробити новий чек</a>
+<div class="no-print" style="display: flex; gap: 10px; margin-bottom: 20px;">
+    {% if session.get('user_role') == 'Cashier' %}
+        <a href="/checks/add" class="btn-create" style="margin: 0;">Пробити новий чек</a>
+    {% endif %}
+    
+    <button onclick="window.print();" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+        🖨️ Згенерувати звіт для друку
+    </button>
 </div>
-{% endif %}
+
+<div class="print-header">
+    <div>АІС "ZLAGODA" — ОФІЦІЙНИЙ ЗВІТ: АРХІВ ФІСКАЛЬНИХ ЧЕКІВ</div>
+    <div>Дата генерації: {{ datetime_now.strftime('%d.%m.%Y %H:%M') if datetime_now else '17.06.2026' }}</div>
+</div>
 
 <div class="table-container">
     <table class="check-table">

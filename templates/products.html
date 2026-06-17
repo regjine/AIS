@@ -2,7 +2,7 @@
 
 {% block title %}Каталог товарів - АІС ZLAGODA{% endblock %}
 
-{% block header_title %}Загальний каталог товарів (Product){% endblock %}
+{% block header_title %}Загальний каталог товарів {% endblock %}
 
 {% block content %}
 <style>
@@ -18,6 +18,53 @@
     .action-link:hover { text-decoration: underline; }
     .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: 500; padding: 0; font-family: inherit; font-size: inherit; }
     .action-del:hover { text-decoration: underline; }
+    .print-header, .print-footer { 
+        display: none; 
+    }
+
+    @media print {
+        @page { 
+            margin: 0; 
+        }
+        body {
+            padding: 1.5cm;
+            background: #fff;
+        }
+
+        .sidebar, .nav-link, button, .btn-add, form, style, 
+        .header, header, .top-bar, [href*="logout"], .logout-btn, a,
+        th:last-child, td:last-child {
+            display: none !important;
+        }
+
+        .main-content, .table-container, .prod-table {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        .prod-table {
+            border-collapse: collapse !important;
+            border: 1.5px solid #000 !important; 
+            margin-top: 10px !important;
+        }
+
+        .prod-table th, .prod-table td {
+            border: 1px solid #000 !important;
+            padding: 8px 12px !important; 
+            font-size: 13px !important;
+            color: #000 !important;
+        }
+
+        .prod-table th {
+            background-color: #f2f2f2 !important; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+        }
+    }
 </style>
 
 {% with messages = get_flashed_messages() %}
@@ -30,11 +77,20 @@
   {% endif %}
 {% endwith %}
 
-{% if session.get('user_role') == 'Manager' %}
-<div>
-    <a href="/products/add" class="btn-add">+ Додати новий товар до каталогу</a>
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    {% if session.get('user_role') == 'Manager' %}
+        <a href="/products/add" class="btn-add">+ Додати новий товар до каталогу</a>
+    {% endif %}
+    
+    <button onclick="window.print();" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+        🖨️ Згенерувати звіт для друку
+    </button>
 </div>
-{% endif %}
+
+<div class="print-header">
+    <div>АІС "ZLAGODA" — ОФІЦІЙНИЙ ЗВІТ: ЗАГАЛЬНИЙ КАТАЛОГ ТОВАРІВ</div>
+    <div>Дата генерації: {{ datetime_now.strftime('%d.%m.%Y %H:%M') if datetime_now else '17.06.2026' }}</div>
+</div>
 
 <div class="table-container">
     <table class="prod-table">
@@ -69,7 +125,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" style="text-align: center; color: #666; font-style: italic;">Каталог товарів порожній.</td>
+                <td colspan="5" style="text-align: center; color: #666; font-style: italic;">Каталог товарів порожній.</td>
             </tr>
             {% endfor %}
         </tbody>
