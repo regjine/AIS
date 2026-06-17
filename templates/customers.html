@@ -18,6 +18,61 @@
     .action-link:hover { text-decoration: underline; }
     .action-del { color: #dc3545; background: none; border: none; cursor: pointer; font-weight: 500; padding: 0; font-family: inherit; font-size: inherit; }
     .action-del:hover { text-decoration: underline; }
+    .print-header, .print-footer { 
+        display: none; 
+    }
+@media print {
+        @page { 
+            margin: 0; 
+        }
+
+        body {
+            padding: 1.5cm;
+            background: #fff;
+        }
+        .sidebar, .nav-link, button, .btn-add, form, style, th:last-child, td:last-child,
+        .header, header, .top-bar, [href*="logout"], .logout-btn, a {
+            display: none !important;
+        }
+
+        .main-content, .table-container, .cust-table {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        .cust-table th, .cust-table td {
+            border-bottom: 1px solid #000 !important;
+            padding: 8px 10px !important;
+        }
+
+        .print-header {
+            display: flex !important;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-size: 11px;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .print-footer {
+            display: flex !important;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 1.5cm;
+            left: 1.5cm;
+            right: 1.5cm;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+            font-size: 10px;
+            font-family: sans-serif;
+        }
+    }
 </style>
 
 {% with messages = get_flashed_messages() %}
@@ -30,8 +85,17 @@
   {% endif %}
 {% endwith %}
 
-<div>
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
     <a href="/customers/add" class="btn-add">+ Реєстрація нового клієнта</a>
+    
+    <button onclick="window.print();" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+        🖨️ Згенерувати звіт для друку
+    </button>
+</div>
+
+<div class="print-header">
+    <div>АІС "ZLAGODA" — ОФІЦІЙНИЙ ЗВІТ: ПОСТІЙНІ КЛІЄНТИ</div>
+    <div>Дата генерації: {{ datetime_now.strftime('%d.%m.%Y %H:%M') if datetime_now else '17.06.2026' }}</div>
 </div>
 
 <div class="table-container">
@@ -44,15 +108,14 @@
                 <th>Знижка</th>
                 <th>Адреса проживання</th>
                 <th>Індекс</th>
-                <th>Дії</th>
-            </tr>
+                <th>Дії</th> </tr>
         </thead>
         <tbody>
             {% for cust in customers %}
             <tr>
                 <td style="font-family: monospace; font-weight: bold; color: #444;">{{ cust.card_number }}</td>
                 <td style="font-weight: 600; color: #111;">
-                    {{ cust.surname }} {{ cust.name }} {{ cust.patronymic }}
+                    {{ cust.surname }} {{ cust.name }} {{ cust.patronymic if cust.patronymic else '' }}
                 </td>
                 <td>{{ cust.phone }}</td>
                 <td><span class="badge-percent">{{ cust.percent }}%</span></td>
