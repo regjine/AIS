@@ -72,7 +72,7 @@ def employees():
         return redirect(url_for('home'))
     
     all_emps = employee_dao.get_all_employees()
-    return render_template('employees.html', employees=all_emps)
+    return render_template('employees.html', employees=all_emps, datetime_now=datetime.now())
 
 @app.route('/employees/delete/<emp_id>', methods=['POST'])
 def delete_employee_route(emp_id):

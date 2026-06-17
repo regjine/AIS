@@ -56,14 +56,84 @@
         color: #444;
         line-height: 1.6;
     }
+
+    .print-header, .print-footer { 
+        display: none; 
+    }
+
+    @media print {
+        @page { 
+            margin: 0; 
+        }
+
+        body {
+            padding: 1.5cm;
+            background: #fff;
+        }
+
+        .sidebar, .nav-link, button, a, .btn-create, form, style, .action-buttons {
+            display: none !important;
+        }
+
+        /* Розтягуємо картки та контейнер на 100% ширини А4 */
+        .main-content, .table-container, .cards-grid {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important; 
+            background: transparent !important;
+        }
+
+        .cards-grid {
+            display: block !important;
+        }
+        
+        .employee-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-bottom: 15px !important;
+            box-shadow: none !important;
+            border: 1px solid #ccc !important;
+            page-break-inside: avoid; 
+        }
+
+        .print-header {
+            display: flex !important;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-size: 11px;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .print-footer {
+            display: flex !important;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 1.5cm;
+            left: 1.5cm;
+            right: 1.5cm;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+            font-size: 10px;
+            font-family: sans-serif;
+        }
+    }
 </style>
 
-<div style="margin-bottom: 20px;">
+<div style="margin-bottom: 20px; display: flex; gap: 10px;">
     <a href="/employees/add" style="text-decoration: none;">
         <button style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
             + Додати співробітника
         </button>
     </a>
+    
+    <button onclick="window.print();" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+        🖨️ Згенерувати звіт для друку
+    </button>
 </div>
 
 <div class="cards-grid">
@@ -98,5 +168,9 @@
         </div>
     </div>
     {% endfor %}
+</div>
+<div class="print-header">
+    <div>АІС "ZLAGODA" — ОФІЦІЙНИЙ ЗВІТ ПО ПЕРСОНАЛУ</div>
+    <div>Дата генерації: {{ datetime_now.strftime('%d.%m.%Y %H:%M') if datetime_now else '17.06.2026' }}</div>
 </div>
 {% endblock %}
